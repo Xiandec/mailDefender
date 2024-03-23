@@ -16,6 +16,19 @@ from config import Config
 
 conf = Config()
 
+def from_subj_decode(msg_from_subj):
+    if msg_from_subj:
+        encoding = decode_header(msg_from_subj)[0][1]
+        msg_from_subj = decode_header(msg_from_subj)[0][0]
+        if isinstance(msg_from_subj, bytes):
+            msg_from_subj = msg_from_subj.decode(encoding)
+        if isinstance(msg_from_subj, str):
+            pass
+        msg_from_subj = str(msg_from_subj).strip("<>").replace("<", "")
+        return msg_from_subj
+    else:
+        return None
+
 def get_all_uid_letters():
     """
     Функция возвращает все `uid` писем на почте
@@ -58,11 +71,47 @@ def get_letters_by_page(
                     if status == 'OK':
                         msg = email.message_from_bytes(msg[0][1])
                         if msg["Subject"]:
-                            header = decode_header(msg["Subject"])[0][0]
-                            header = (header.decode() if isinstance(header, bytes) else header)
+                            header = from_subj_decode(msg["Subject"])
                         else:
                             header = 'Пустая тема'
                         response[str(uid)] = header + ' ' + msg['Return-path']
+                return response
+    except ConnectionRefusedError:
+        logging.error("ConnectionRefusedError: [Errno 61] Connection refused")
+    except BaseException:
+        logging.error("BaseException")
+    return
+
+def get_letter_by_uid(uid : str):
+    mail_pass = conf.get_value('mail_pass')
+    username = conf.get_value('username')
+    imap_server = conf.get_value('imap_server')
+    try:
+        response = {}
+        with imaplib.IMAP4_SSL(imap_server) as imap:
+            imap.login(username, mail_pass)
+            imap.select("INBOX")
+            status, msg = imap.uid('fetch', uid.encode("utf-8"), '(RFC822)')
+            if status == 'OK':
+                msg = email.message_from_bytes(msg[0][1])
+                if msg["Subject"]:
+                    header = from_subj_decode(msg["Subject"])
+                else:
+                    header = 'Пустая тема'
+                response['header'] = header
+                for part in msg.walk():
+                    try:
+                        if part.get_content_maintype() == 'text' and part.get_content_subtype() == 'plain':
+                            response['text'] = base64.b64decode(part.get_payload()).decode()
+
+                        if part.get_content_maintype() == 'text' and part.get_content_subtype() == 'html':
+                            response['html'] = base64.b64decode(part.get_payload()).decode().replace('<HTML>', '<HTML><meta charset="UTF-8">')
+                                
+                        if part.get_content_disposition() == 'attachment':
+                            filename = from_subj_decode(part.get_filename())
+                            response[filename] = part.get_payload(decode=True)
+                    except BaseException:
+                        pass
                 return response
     except ConnectionRefusedError:
         logging.error("ConnectionRefusedError: [Errno 61] Connection refused")
