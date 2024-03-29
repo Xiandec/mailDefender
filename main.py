@@ -41,21 +41,28 @@ async def process_callback_letter(callback_query: types.CallbackQuery):
     # get letter
     letter = methods.get_letter_by_uid(code)
     if letter:
-        for key, value in letter.items():
-            if 'html' == key:
-                await bot.send_document(
-                    chat_id=callback_query.from_user.id,
-                    document=('letter.html', letter['html'])
-                )
-            elif 'text' == key:
-                await bot.send_message(
-                chat_id=callback_query.from_user.id,
-                text=letter['header'] + '\n' + letter['text']
+        if 'text' in letter:
+            await bot.edit_message_text(
+            chat_id=callback_query.from_user.id,
+            text=letter['header'] + '\n' + letter['text'],
+            message_id=callback_query.message.message_id
             )
-            elif 'header' != key:
+        elif 'text' not in letter:
+            await bot.edit_message_text(
+            chat_id=callback_query.from_user.id,
+            text=letter['header'],
+            message_id=callback_query.message.message_id
+            )
+        if 'html' in letter:
+            await bot.send_document(
+                chat_id=callback_query.from_user.id,
+                document=('letter.html', letter['html'])
+            )
+        if len(letter['attachment']) > 0:
+            for attachment in letter['attachment']:
                 await bot.send_document(
                     chat_id=callback_query.from_user.id,
-                    document=(key, value)
+                    document=(attachment['filename'], attachment['file'])
                 )
     await bot.send_message(
             chat_id=callback_query.from_user.id,

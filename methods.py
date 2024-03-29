@@ -16,7 +16,10 @@ from config import Config
 
 conf = Config()
 
-def from_subj_decode(msg_from_subj):
+def from_subj_decode(msg_from_subj) -> str:
+    """
+    Функция декодирует строку письма, если та закодированна
+    """
     if msg_from_subj:
         encoding = decode_header(msg_from_subj)[0][1]
         msg_from_subj = decode_header(msg_from_subj)[0][0]
@@ -27,9 +30,9 @@ def from_subj_decode(msg_from_subj):
         msg_from_subj = str(msg_from_subj).strip("<>").replace("<", "")
         return msg_from_subj
     else:
-        return None
+        return
 
-def get_all_uid_letters():
+def get_all_uid_letters() -> list:
     """
     Функция возвращает все `uid` писем на почте
     """
@@ -52,7 +55,10 @@ def get_all_uid_letters():
 def get_letters_by_page(
         page: int = 1,
         paginate_by : int = 10
-        ):
+        ) -> dict:
+    """
+    Функция возвращает письма на странице (пагинация)
+    """
     mail_pass = conf.get_value('mail_pass')
     username = conf.get_value('username')
     imap_server = conf.get_value('imap_server')
@@ -82,12 +88,22 @@ def get_letters_by_page(
         logging.error("BaseException")
     return
 
-def get_letter_by_uid(uid : str):
+def get_letter_by_uid(uid : str) -> dict:
+    """
+    Функция возвращает письмо по его `uid`
+
+    В словаре записываются следующие значения: 
+
+    - `header` - заголовок письма, или 'пустая тема'
+    - `text` - текст письма, если есть
+    - `html` - html код письма, если есть
+    - `attachment` - все вложения письма, если нет, то пустой список
+    """
     mail_pass = conf.get_value('mail_pass')
     username = conf.get_value('username')
     imap_server = conf.get_value('imap_server')
     try:
-        response = {}
+        response = {'attachment' : []}
         with imaplib.IMAP4_SSL(imap_server) as imap:
             imap.login(username, mail_pass)
             imap.select("INBOX")
@@ -109,7 +125,7 @@ def get_letter_by_uid(uid : str):
                                 
                         if part.get_content_disposition() == 'attachment':
                             filename = from_subj_decode(part.get_filename())
-                            response[filename] = part.get_payload(decode=True)
+                            response['attachment'].append({'filename': filename, 'file': part.get_payload(decode=True)})
                     except BaseException:
                         pass
                 return response
