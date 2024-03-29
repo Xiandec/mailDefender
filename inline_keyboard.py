@@ -28,7 +28,9 @@ def get_letters_by_page(
                                             callback_data='page' + str(min((letters_num // paginate_by), page + 1)))
         BTN_PAGE = InlineKeyboardButton(' - ' + str(page) + '/' + str(letters_num // paginate_by) + ' - ', callback_data='no_move')
         
-        keyboard.add(LEFT_ARROW, BTN_PAGE, RIGHT_ARROW).add(BTN_GET_BACK)
+        keyboard.add(LEFT_ARROW, BTN_PAGE, RIGHT_ARROW)
+        if page != 1:
+            keyboard.add(BTN_GET_BACK)
     else:
         keyboard = GET_BACK
     return keyboard
