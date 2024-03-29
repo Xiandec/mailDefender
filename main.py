@@ -27,6 +27,9 @@ dp = Dispatcher(bot, storage=storage)
 # start reg to bot
 @dp.message_handler(commands=['start'])
 async def start(message: types.Message):
+    """
+    Стартовое сообщение для бота, отправляет первую страницу писем
+    """
 
     await message.answer(
             text=messages.start_page(),
@@ -35,6 +38,9 @@ async def start(message: types.Message):
 
 @dp.callback_query_handler(lambda c: c.data and c.data.startswith('letter'))
 async def process_callback_letter(callback_query: types.CallbackQuery):
+    """
+    Отправляет всё что есть в письме по нажатию на кнопку письма
+    """
     code = callback_query.data.replace('letter', '')
     if code.isdigit():
         code = str(code)
@@ -84,6 +90,9 @@ async def process_callback_letter(callback_query: types.CallbackQuery):
 
 @dp.callback_query_handler(lambda c: c.data and c.data.startswith('page'))
 async def process_callback_letters_page(callback_query: types.CallbackQuery):
+    """
+    Отправляет новую странцу писем
+    """
     code = callback_query.data.replace('page', '')
     if code.isdigit():
         code = int(code)
