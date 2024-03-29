@@ -1,5 +1,3 @@
-import methods
-import json
 from config import Config
 
 conf = Config()

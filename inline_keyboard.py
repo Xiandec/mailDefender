@@ -1,6 +1,5 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 import methods
-import json
 
 
 BTN_GET_BACK= InlineKeyboardButton('Назад на странцу 1', callback_data='page1')
