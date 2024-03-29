@@ -40,34 +40,59 @@ async def process_callback_letter(callback_query: types.CallbackQuery):
         code = str(code)
     # get letter
     letter = methods.get_letter_by_uid(code)
-    if letter:
-        if 'text' in letter:
-            await bot.edit_message_text(
-            chat_id=callback_query.from_user.id,
-            text=letter['header'] + '\n' + letter['text'],
-            message_id=callback_query.message.message_id
-            )
-        elif 'text' not in letter:
+    if letter: # if letter isnt None
+
+        if 'text' in letter: # if text 
+            if len(letter['text']) > 4096: # if text too long
+                await bot.edit_message_text(
+                    chat_id=callback_query.from_user.id,
+                    text=letter['header'] + '\n' + 'Текст слишком длинный для телеграм',
+                    message_id=callback_query.message.message_id
+                    )
+            else: # if text nit long
+                await bot.edit_message_text(
+                chat_id=callback_query.from_user.id,
+                text=letter['header'] + '\n' + letter['text'],
+                message_id=callback_query.message.message_id
+                )
+
+        elif 'text' not in letter: # send only `header`
             await bot.edit_message_text(
             chat_id=callback_query.from_user.id,
             text=letter['header'],
             message_id=callback_query.message.message_id
             )
-        if 'html' in letter:
+
+        if 'html' in letter: # send `html` code of letter
             await bot.send_document(
                 chat_id=callback_query.from_user.id,
                 document=('letter.html', letter['html'])
             )
-        if len(letter['attachment']) > 0:
+
+        if len(letter['attachment']) > 0: # if any attachments
             for attachment in letter['attachment']:
                 await bot.send_document(
                     chat_id=callback_query.from_user.id,
                     document=(attachment['filename'], attachment['file'])
                 )
+
     await bot.send_message(
             chat_id=callback_query.from_user.id,
             text=messages.start_page(),
             reply_markup=inline_keyboard.get_letters_by_page()
+        )
+
+@dp.callback_query_handler(lambda c: c.data and c.data.startswith('page'))
+async def process_callback_letters_page(callback_query: types.CallbackQuery):
+    code = callback_query.data.replace('page', '')
+    if code.isdigit():
+        code = int(code)
+    
+    await bot.edit_message_text(
+            chat_id=callback_query.from_user.id,
+            message_id=callback_query.message.message_id,
+            text=messages.start_page(),
+            reply_markup=inline_keyboard.get_letters_by_page(page=code)
         )
 
 @dp.message_handler() # Он принимает все запросы без фильтров

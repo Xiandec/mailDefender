@@ -3,7 +3,7 @@ import methods
 import json
 
 
-BTN_GET_BACK= InlineKeyboardButton('Назад', callback_data='get_back')
+BTN_GET_BACK= InlineKeyboardButton('Назад на странцу 1', callback_data='page1')
 
 GET_BACK = InlineKeyboardMarkup().add(BTN_GET_BACK)
 
@@ -22,10 +22,13 @@ def get_letters_by_page(
             BTN_1 = InlineKeyboardButton(value, callback_data='letter' + str(key))
             keyboard.add(BTN_1)
 
-        LEFT_ARROW = InlineKeyboardButton('<', callback_data='<' + str(max(0, page - 1)))
-        RIGHT_ARROW = InlineKeyboardButton('>', callback_data='>' + str(min((letters_num // paginate_by), page + 1)))
+        LEFT_ARROW = InlineKeyboardButton(str(max(1, page - 1)) + ' <',
+                                           callback_data='page' + str(max(1, page - 1)))
+        RIGHT_ARROW = InlineKeyboardButton('> ' + str(min((letters_num // paginate_by), page + 1)),
+                                            callback_data='page' + str(min((letters_num // paginate_by), page + 1)))
+        BTN_PAGE = InlineKeyboardButton(' - ' + str(page) + '/' + str(letters_num // paginate_by) + ' - ', callback_data='no_move')
         
-        keyboard.add(LEFT_ARROW, BTN_GET_BACK, RIGHT_ARROW)
+        keyboard.add(LEFT_ARROW, BTN_PAGE, RIGHT_ARROW).add(BTN_GET_BACK)
     else:
         keyboard = GET_BACK
     return keyboard
