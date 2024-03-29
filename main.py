@@ -1,11 +1,4 @@
 import logging
-import random
-import string
-import yaml
-import os
-import json
-
-
 
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.dispatcher.filters.state import StatesGroup, State
@@ -106,6 +99,9 @@ async def process_callback_letters_page(callback_query: types.CallbackQuery):
 
 @dp.message_handler() # Он принимает все запросы без фильтров
 async def error(message: types.Message):
+    """
+    Отправляет сообщение об ошибке
+    """
     await message.answer(
             text=messages.error_msg()
         )
